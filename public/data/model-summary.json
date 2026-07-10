@@ -1,0 +1,21 @@
+{
+  "base_value": 178.393,
+  "base_stderr": 2.253,
+  "best_scenario": "Higher prompt vol",
+  "best_scenario_value": 192.145,
+  "worst_scenario": "Tighter terminal target",
+  "worst_scenario_value": 158.681,
+  "surface_min": 167.108,
+  "surface_max": 175.538,
+  "best_initial_inventory": 95.0,
+  "figures": [
+    "/figures/lab/model-process.png",
+    "/figures/lab/state-path-fan.png",
+    "/figures/lab/value-sensitivity-bars.png",
+    "/figures/lab/spread-vol-mean-reversion-surface.png",
+    "/figures/lab/initial-inventory-sensitivity.png",
+    "/figures/lab/policy-spread-maps.png",
+    "/figures/lab/hedge-delta-ladder.png"
+  ],
+  "note": "Toy simulated values; not calibrated market valuation."
+}

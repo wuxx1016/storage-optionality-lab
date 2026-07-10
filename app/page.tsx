@@ -7,6 +7,7 @@ import {
   Code2,
 } from "lucide-react";
 import { Equation, InlineMath } from "../components/Math";
+import modelSummary from "../public/data/model-summary.json";
 
 export const metadata: Metadata = {
   title: "Storage Optionality Lab | Mathematical Specification",
@@ -16,17 +17,18 @@ export const metadata: Metadata = {
 
 const sections = [
   ["scope", "1. Valuation problem"],
-  ["state", "2. State and information"],
-  ["curve", "3. Forward-curve model"],
-  ["physical", "4. Physical storage"],
-  ["cashflow", "5. Cashflow and terminal"],
-  ["dynamic", "6. Dynamic program"],
-  ["lsmc", "7. LSMC specification"],
-  ["rl", "8. RL formulation"],
-  ["extrinsic", "9. Extrinsic value"],
-  ["hedging", "10. Hedges and risk"],
-  ["implementation", "11. Model boundary"],
-  ["roadmap", "12. Valuation roadmap"],
+  ["lab", "2. Simulated model lab"],
+  ["state", "3. State and information"],
+  ["curve", "4. Forward-curve model"],
+  ["physical", "5. Physical storage"],
+  ["cashflow", "6. Cashflow and terminal"],
+  ["dynamic", "7. Dynamic program"],
+  ["lsmc", "8. LSMC specification"],
+  ["rl", "9. RL formulation"],
+  ["extrinsic", "10. Extrinsic value"],
+  ["hedging", "11. Hedges and risk"],
+  ["implementation", "12. Model boundary"],
+  ["roadmap", "13. Valuation roadmap"],
   ["references", "References"],
 ] as const;
 
@@ -60,6 +62,23 @@ function Definition({
       <dt>{term}</dt>
       <dd>{children}</dd>
     </div>
+  );
+}
+
+function LabFigure({
+  src,
+  alt,
+  caption,
+}: {
+  src: string;
+  alt: string;
+  caption: React.ReactNode;
+}) {
+  return (
+    <figure className="data-figure lab-figure">
+      <img src={src} alt={alt} width={1600} height={900} />
+      <figcaption>{caption}</figcaption>
+    </figure>
   );
 }
 
@@ -99,7 +118,7 @@ export default function Home() {
           </Equation>
           <div className="hero-meta">
             <span><CircleDot size={15} aria-hidden="true" /> Monthly toy model today</span>
-            <span><Check size={15} aria-hidden="true" /> Daily market model planned</span>
+            <span><Check size={15} aria-hidden="true" /> Simulated sensitivity plots added</span>
             <a href="#scope">Read the specification <ArrowDown size={15} aria-hidden="true" /></a>
           </div>
         </div>
@@ -150,6 +169,105 @@ export default function Home() {
               Report fair value and strategy value separately. Mixing historical drift with
               risk-neutral discounting can create apparent value that is really a directional
               forecast.
+            </aside>
+          </section>
+
+          <section id="lab" className="paper-section lab-section">
+            <SectionHeading eyebrow="02 · Simulated model lab" title="A runnable toy valuation workflow">
+              The current code generates simulated state paths, fits an LSMC policy,
+              evaluates it out of sample, and publishes diagnostics that explain which
+              assumptions move value. These are research checks, not calibrated market
+              marks.
+            </SectionHeading>
+
+            <div className="metric-strip" aria-label="Simulated model summary">
+              <div>
+                <span>Base LSMC value</span>
+                <strong>{modelSummary.base_value}</strong>
+                <small>standard error {modelSummary.base_stderr}</small>
+              </div>
+              <div>
+                <span>Largest upside test</span>
+                <strong>{modelSummary.best_scenario}</strong>
+                <small>value {modelSummary.best_scenario_value}</small>
+              </div>
+              <div>
+                <span>Largest downside test</span>
+                <strong>{modelSummary.worst_scenario}</strong>
+                <small>value {modelSummary.worst_scenario_value}</small>
+              </div>
+              <div>
+                <span>Vol / mean-reversion range</span>
+                <strong>{modelSummary.surface_min}-{modelSummary.surface_max}</strong>
+                <small>surface min to max</small>
+              </div>
+            </div>
+
+            <LabFigure
+              src="/figures/lab/model-process.png"
+              alt="Modeling process from market state and facility state to feasible actions, LSMC valuation, policy value, and risk views"
+              caption="The website now follows the same modeling pipeline as the Python package: one simulated environment, common random numbers, fitted policy evaluation, and then risk diagnostics."
+            />
+
+            <div className="lab-grid two">
+              <LabFigure
+                src="/figures/lab/state-path-fan.png"
+                alt="Fan charts for prompt price, prompt-next spread, winter-summer spread, and local basis"
+                caption="The policy observes prompt price, short spread, seasonal spread, basis, volatility proxies, calendar state, and normalized inventory."
+              />
+              <LabFigure
+                src="/figures/lab/value-sensitivity-bars.png"
+                alt="Bar chart of LSMC value sensitivity to prompt volatility, spread volatility, mean reversion, basis risk, ratchets, and terminal target"
+                caption="The first sensitivity pass shows that terminal constraints, mean reversion, basis risk, and ratchets can move value as much as volatility bumps."
+              />
+            </div>
+
+            <LabFigure
+              src="/figures/lab/spread-vol-mean-reversion-surface.png"
+              alt="Heatmap of LSMC policy value over spread volatility and spread mean reversion"
+              caption="This surface is the planned template for extrinsic-value studies: vary spread volatility and mean reversion jointly rather than reporting a single volatility shock."
+            />
+
+            <div className="lab-grid two">
+              <LabFigure
+                src="/figures/lab/initial-inventory-sensitivity.png"
+                alt="Line chart showing policy value by initial inventory"
+                caption="Initial inventory changes the reachable set of future states. The same forward curve can have different value depending on whether injection or withdrawal flexibility is scarce."
+              />
+              <LabFigure
+                src="/figures/lab/hedge-delta-ladder.png"
+                alt="Illustrative finite-difference monthly hedge delta ladder"
+                caption="The hedge ladder is finite-difference based on the fitted value map. The production version should bump calibrated factors and map them to tradable monthly instruments."
+              />
+            </div>
+
+            <LabFigure
+              src="/figures/lab/policy-spread-maps.png"
+              alt="Continuation value heatmaps over prompt-next spread and winter-summer spread at three inventory levels"
+              caption="The continuation-value surface makes the inventory-spread interaction visible. This is a regression diagnostic: a policy chart that collapses to one action is a warning, not an insight."
+            />
+
+            <div className="insight-list">
+              <div>
+                <span>Finding 1</span>
+                <p>Volatility is not a scalar value driver. Prompt volatility, seasonal spread volatility, and correlation with basis should be separated.</p>
+              </div>
+              <div>
+                <span>Finding 2</span>
+                <p>Ratchets and terminal rules control whether flexibility can actually be monetized. Higher volatility without reachable inventory states may not add much value.</p>
+              </div>
+              <div>
+                <span>Finding 3</span>
+                <p>Basis risk must be carried into hedge diagnostics. Hub deltas can look clean while local physical P&amp;L remains exposed.</p>
+              </div>
+            </div>
+
+            <aside className="warning">
+              <span>Current code boundary</span>
+              The simulation uses fast path counts and smooth toy ratchets so it can run on a
+              laptop. The final version should add calibrated market curves, daily facility
+              rules, cross-fit LSMC, richer RL training, and hedge backtests before any
+              chart is treated as a valuation result.
             </aside>
           </section>
 
